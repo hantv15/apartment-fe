@@ -1,0 +1,29 @@
+{
+  "users": [],
+  "departments": [
+    {
+      "departmentId": "P2711",
+      "square_meter": 13,
+      "status": 95,
+      "tower": "tower 1",
+      "id": "1"
+    }
+  ],
+  "user_department": [
+    {
+      "id": 1,
+      "departmentId": "P2711",
+      "userId": "1"
+    }
+  ],
+  "bills": [
+    {
+      "total": 3000000,
+      "status": 1,
+      "departmentId": "P2711",
+      "date_expire": "date_expire 1",
+      "image_bill_confirm": "image_bill_confirm 1",
+      "id": "1"
+    }
+  ]
+}

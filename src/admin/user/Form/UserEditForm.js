@@ -1,7 +1,9 @@
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useParams } from "react-router-dom";
-import { edit, get } from "../../../common/userApi";
+import Swal from "sweetalert2";
+import { getUser } from "../../../api/userAPI";
 import Content from "../../../core/Content";
 const UserEditForm = () => {
   const {
@@ -12,67 +14,100 @@ const UserEditForm = () => {
   } = useForm();
   const { id } = useParams();
   const [user, setUser] = useState({});
-  
+  const [apartmentNotOwned, setApartmentNotOwned] = useState([]);
+  const [loadPage, setLoadPage] = useState(0);
+  useEffect(() => {
+    try {
+      const getData = async () => {
+        const { data } = await getUser(id);
+        setUser(data.data[0]);
+        reset(data);
+      };
+      getData();
+    } catch (error) {
+      console.log(error);
+    }
+  }, [loadPage]);
 
   useEffect(() => {
-    const getUser = async () => {
-      try {
-        const { data } = await get(id);
-        setUser(data);
-        reset(data);
-      } catch (error) {
-        console.log(error);
+    try {
+      const getDataA = () => {
+        axios.get("http://apartment-system.xyz/api/apartment/not-owned").then((response) => setApartmentNotOwned(response.data.data))
       }
-    };
+      getDataA();
+    } catch (error) {
+      console.log(error.message);
+    }
+  }, [])
 
-    getUser();
-  }, []);
 
-//   console.log(typeof(department.department_id));
+  const option = {
+    label: "P101",
+    value: 13
+  }
   const onSubmit = (item) => {
-    const updateItem = {
-      id,
-      ...item
-    };
-    console.log(updateItem);
-    edit(updateItem);
+    axios.post(`http://apartment-system.xyz/api/user/edit/${id}`, item).then(() => {
+      var Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+      });
+      Toast.fire({
+        icon: "success",
+        title: "Sửa người dùng thành công.",
+      });
+    }).then(() => {
+      setLoadPage(1);
+    })
   }
 
+
+  const options = [
+    {
+      label: "Hoạt động",
+      value: 1,
+    },
+    {
+      label: "Không hoạt động",
+      value: 0,
+    }
+  ]
+
+  console.log(user);
   const editUser = () => {
     return (
       <div className="col-md-12">
         <div className="card card-primary">
-          {/* /.card-header */}
-          {/* form start */}
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="card-body">
-            <div className="row">
+              <div className="row">
                 <div className="col-md-6">
-                <div className="form-group">
+                  <div className="form-group">
                     <label htmlFor="exampleInputEmail1">Tên</label>
                     <input
                       type="text"
-                      defaultValue={user.name}
                       className="form-control"
                       id="exampleInputEmail1"
                       placeholder="Nhập tên"
+                      defaultValue={user.user_name}
                       {...register('name', {
                         required: true,
-                        
+
                       })}
                     />
                     {errors?.name?.type === "required" && <p className="text-danger">Nhập tên</p>}
-                    
+
                   </div>
                   <div className="form-group">
-                    <label htmlFor="exampleInputEmail1">Sdt</label>
+                    <label htmlFor="exampleInputEmail1">Số điện thoại</label>
                     <input
-                      type="number"
-                      defaultValue={user.phone}
+                      type="text"
                       className="form-control"
                       id="exampleInputEmail1"
-                      placeholder="Nhập số điện thaoij"
-                      {...register('phone', {
+                      placeholder="Nhập số điện thoại"
+                      defaultValue={user.phone_number}
+                      {...register('phone_number', {
                         required: true,
                         pattern: /^(0?)(3[2-9]|5[6|8|9]|7[0|6-9]|8[0-6|8|9]|9[0-4|6-9])[0-9]{7}$/
                       })}
@@ -84,10 +119,10 @@ const UserEditForm = () => {
                     <label htmlFor="exampleInputEmail1">Email</label>
                     <input
                       type="email"
-                      defaultValue={user.email}
                       className="form-control"
                       id="exampleInputEmail1"
                       placeholder="Nhập email"
+                      defaultValue={user.email}
                       {...register('email', {
                         required: true,
                         pattern: /^[a-z][a-z0-9_\.]{5,32}@[a-z0-9]{2,}(\.[a-z0-9]{2,4}){1,2}$/
@@ -96,40 +131,51 @@ const UserEditForm = () => {
                     {errors?.email?.type === "required" && <p className="text-danger">Hãy nhập trường này</p>}
                     {errors?.email?.type === "pattern" && <p className="text-danger">Hãy nhập các ký từ A-z</p>}
                   </div>
-                  
+
                 </div>
                 <div className="col-md-6">
-                <div className="form-group">
+                  <div class="form-group">
+                    <label>Chọn căn hộ</label>
+                    <select {...register('apartment_id')} class="form-control">
+                      <option selected value={user.id}>{user.apartment_id}</option>
+                      {apartmentNotOwned.map((item) => (
+                        <option value={item.id}>{item.apartment_id}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
                     <label htmlFor="exampleInputEmail1">Ngày sinh</label>
                     <input
                       type="date"
-                      defaultValue={user.birth}
                       className="form-control"
                       id="exampleInputEmail1"
                       placeholder="Nhập ngày sinh"
-                      {...register('birth', {
+                      defaultValue={user.dob}
+                      {...register('dob', {
                         required: true,
                       })}
                     />
                     {errors?.phone?.type === "required" && <p className="text-danger">sNhập ngày sinh</p>}
-                    
+
                   </div>
-                  
-                  
+                  <div class="form-group">
+                    <label>Trạng thái</label>
+                    <select {...register('status')} class="form-control">
+                      {options.map((item) => (
+                        <option selected={item.value == user.status} value={item.value}>{item.label}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
             {/* /.card-body */}
             <div class="card-footer">
-              <Link
-                to="/admin/department"
-                type="submit"
-                class="btn btn-default float-left"
-              >
+              <Link to="/admin/user" type="button" class="btn btn-default float-left">
                 Quay lại
               </Link>
               <button type="submit" class="btn btn-info float-right">
-                Thêm mới
+                Lưu sửa
               </button>
             </div>
           </form>

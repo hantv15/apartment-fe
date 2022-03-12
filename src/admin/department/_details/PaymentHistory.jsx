@@ -1,37 +1,6 @@
 import { Button } from "react-bootstrap";
 import BillModal from "../Modal/BillModal";
-import React, {useEffect, useState} from "react";
-import { get,getBills } from "../../../common/departmentAPI";
-
-import { Link,useParams } from "react-router-dom";
-const PaymentHistory = () => {
-  const [departments, setDepartments] = useState([]);
-  const statusOptions = [
-    {
-      value: 1,
-      name: "Trả",
-    },
-    {
-      value: 0,
-      name: "Chưa trả",
-    },
-  ];
-  const { id } = useParams();
-  useEffect(() => {
-    const getDepartments = async () => {
-      try {
-        const { data } = await getBills(id);
-        
-        setDepartments(data.data);
-        console.log(data);
-        // console.log(datas);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    getDepartments();
-  }, []);
+const PaymentHistory = ({ handleClose, handleShows, show }) => {
   return (
     <>
       <div className="row mb-3 mt-4">
@@ -51,72 +20,38 @@ const PaymentHistory = () => {
                             <th scope="col">STT</th>
                             <th scope="col">Tên hóa đơn</th>
                             <th scope="col">Tên chủ hộ</th>
-                            
+                            <th scope="col">Địa chỉ</th>
                             <th scope="col">Tổng tiền</th>
                             <th scope="col">Trạng thái</th>
-                            <th className="d-flex justify-content-center">
-                              {/* <a
-                                className="btn btn-sm btn-outline-success btn-flat"
-                                to="/admin/department/add"
-                              >
-                                Thêm mới
-                              </a> */}
-                              Chức năng
-                            </th>
+                            <th scope="col">Chức năng</th>
                           </tr>
                         </thead>
                         <tbody>
-                        {departments.map((item,index)=>(
-                              <tr key={item.id}>                          
-                              <th scope="row">{index + 1}</th>
-                              <td>{item.ten_hoa_don}</td>
-                              <td>{item.ten_chu_ho}</td>
-                              <td>{item.amount}</td>
-                              
-                              <td>
-                            {statusOptions.map((status) =>
-                              status.value == item.status
-                                ? status.name
-                                : ""
-                            )}
-                          </td>
-                              <td className="d-flex justify-content-center">
-                                <Link
-                                  variant="btn btn-sm btn-outline-primary btn-flat"
-                                  to={`/admin/department/modal/${item.id}`}
-                                >
-                                  Chi tiết
-                                </Link>
-                                
-                              </td>
-                            </tr>
-                              ))}
-                          
+                          <tr>
+                            <th scope="row">1</th>
+                            <td>Phiếu thu tiền phí tháng 02/2022</td>
+                            <td>Nguyễn Văn A</td>
+                            <td>P02711</td>
+                            <td>500.000đ</td>
+                            <td>Đã thanh toán</td>
+                            <td className="d-flex justify-content-center">
+                              <Button
+                                variant="btn btn-sm btn-outline-primary btn-flat"
+                                onClick={handleShows}
+                              >
+                                Chi tiết
+                              </Button>
+                            </td>
+                          </tr>
                         </tbody>
                       </table>
                     </div>
                   </div>
                   {/* <div className="row">
-                    <div className="col-sm-12">
-                      <ReactPaginate
-                        previousLabel={"previous"}
-                        nextLabel={"next"}
-                        breakLabel={"..."}
-                        pageCount={10}
-                        marginPagesDisplayed={3}
-                        pageRangeDisplayed={3}
-                        // onPageChange={}
-                        containerClassName={"pagination justify-content-center"}
-                        pageClassName={"page-item"}
-                        pageLinkClassName={"page-link"}
-                        previousClassName={"page-item"}
-                        previousLinkClassName={"page-link"}
-                        nextClassName={"page-item"}
-                        nextLinkClassName={"page-link"}
-                        activeClassName={"active"}
-                      />
-                    </div>
-                  </div> */}
+              <div className="col-sm-12">
+                
+              </div>
+            </div> */}
                 </div>
               </div>
             </div>
@@ -124,7 +59,7 @@ const PaymentHistory = () => {
         </div>
       </div>
       {/* Modal */}
-      {/* {show && <BillModal handleClose={handleClose} show={show} />} */}
+      {show && <BillModal handleClose={handleClose} show={show} />}
     </>
   );
 };

@@ -1,6 +1,8 @@
+import axios from "axios";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useHistory } from "react-router-dom";
+import Swal from "sweetalert2";
 import Content from "../../../core/Content";
 const ServiceFormAdd = () => {
   const {
@@ -8,15 +10,28 @@ const ServiceFormAdd = () => {
     handleSubmit,
     formState: { errors },
   } = useForm();
-
-  const handleAddService = async (item) => {};
+  const history = useHistory();
   const onSubmit = (item) => {
-    handleAddService(item);
+    try {
+      axios
+        .post("http://apartment-system.xyz/api/service/add", item)
+        .then(() => {
+          var Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+          });
+          Toast.fire({
+            icon: "success",
+            title: "Thêm mới dịch vụ thành công.",
+          });
+        });
+    } catch (error) {
+      console.log(error);
+    }
   };
   const addService = () => {
-    const demo = () => {
-      console.log(1);
-    };
     return (
       <div className="col-md-12">
         <div className="card card-primary">
@@ -27,87 +42,75 @@ const ServiceFormAdd = () => {
               <div className="row">
                 <div className="col-md-6">
                   <div className="form-group">
-                    <label htmlFor="exampleInputEmail1">Mã căn hộ</label>
+                    <label htmlFor="exampleInputEmail1">Tên dịch vụ</label>
                     <input
                       type="text"
                       className="form-control"
                       id="exampleInputEmail1"
-                      placeholder="Nhập mã căn hộ"
-                      {...register("department_id", {
+                      placeholder="Nhập tên dịch vụ"
+                      {...register("name", {
                         required: true,
-                        pattern: /^[a-zA-Z0-9_.-]*$/i,
                       })}
                     />
-                    {errors?.department_id?.type === "required" && (
+                    {errors?.name?.type === "required" && (
                       <p className="text-danger">Hãy nhập trường này</p>
-                    )}
-                    {errors?.department_id?.type === "pattern" && (
-                      <p className="text-danger">Hãy nhập các ký từ A-z</p>
                     )}
                   </div>
                   <div className="form-group">
-                    <label htmlFor="exampleInputEmail1">Tên tòa nhà</label>
+                    <label htmlFor="exampleInputEmail1">Giá</label>
                     <input
                       type="text"
                       className="form-control"
                       id="exampleInputEmail1"
-                      placeholder="Nhập mã căn hộ"
-                      {...register("tower", {
+                      placeholder="Nhập giá dịch vụ"
+                      {...register("price", {
                         required: true,
-                      })}
-                    />
-                    {errors?.tower?.type === "required" && (
-                      <p className="text-danger">Hãy nhập trường này</p>
-                    )}
-                    {errors?.tower?.type === "pattern" && (
-                      <p className="text-danger">Hãy nhập các ký từ A-z</p>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="exampleInputEmail1">
-                      Kích thước căn hộ
-                    </label>
-                    <input
-                      {...register("square_meter", {
                         pattern: /^[0-9]*$/,
                       })}
-                      type="text"
-                      className="form-control"
-                      id="number"
-                      name="square_meter"
-                      placeholder="Nhập kích thước căn hộ"
                     />
-                    {errors?.square_meters?.type === "pattern" && (
-                      <p className="text-danger">Hãy nhập các ký từ là số</p>
+                    {errors?.price?.type === "required" && (
+                      <p className="text-danger">Hãy nhập trường này</p>
                     )}
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div class="form-group">
-                    <label>Chủ sở hữu</label>
-                    <select {...register("user_id")} class="form-control">
-                      <option value="1">Hân</option>
-                    </select>
+                    {errors?.price?.type === "pattern" && (
+                      <p className="text-danger">Nhập ký tự là số</p>
+                    )}
                   </div>
                   <div class="form-group">
                     <label>Trạng thái</label>
                     <select {...register("status")} class="form-control">
-                      <option value="1">Active</option>
-                      <option value="2">InActive</option>
+                      <option selected value="1">
+                        Chọn trạng thái
+                      </option>
+                      <option value="1">Hoạt động</option>
+                      <option value="0">Không hoạt động</option>
                     </select>
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <div class="form-group">
+                    <label htmlFor="exampleInputEmail1">Mô tả</label>
+                    <textarea
+                      {...register("description")}
+                      className="form-control"
+                      rows={8}
+                      placeholder="Mô tả ..."
+                      defaultValue={""}
+                    />
                   </div>
                 </div>
               </div>
             </div>
             {/* /.card-body */}
             <div class="card-footer">
-              <Link
-                to="/admin/department"
-                type="submit"
+              <button
+                onClick={() => {
+                  history.goBack();
+                }}
+                type="button"
                 class="btn btn-default float-left"
               >
                 Quay lại
-              </Link>
+              </button>
               <button type="submit" class="btn btn-info float-right">
                 Thêm mới
               </button>

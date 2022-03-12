@@ -19,11 +19,11 @@ const Finace = () => {
   const statusOptions = [
     {
       value: 1,
-      name: "Trả",
+      name: "Active",
     },
     {
       value: 0,
-      name: "Chưa trả",
+      name: "InActive",
     },
   ];
   const { id } = useParams();

@@ -1,173 +1,245 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import ReactPaginate from "react-paginate";
-import {
-  fetchPagination,
-  getAll,
-  getPagination,
-  remove,
-  searchName,
-} from "../../common/userApi";
 import Content from "../../core/Content";
-const UserList= () => {
-    const [users,setUsers]=useState([]);
-    const [pageCount, setPageCount] = useState(0);
-   const [searchTerm, setSearchTerm] = useState("");
-   const typingTimeoutRef = useRef(null);
-    const limit = 10;
-    useEffect(() => {
-        const getAllUsers = async () => {
-          const res = await fetch(
-            `https://61fe3d3aa58a4e00173c978d.mockapi.io/users`
-          );
-          const data = await res.json();
-          setPageCount(Math.ceil(data.length / 10));
-        };
-    
-        getAllUsers();
-    
-        const getUsers = async () => {
-          try {
-            const { data } = await getPagination(1, limit);
-            setUsers(data);
-          } catch (error) {
-            console.log(error);
-          }
-        };
-    
-        getUsers();
-      }, []);
-    
-      const fetchUsers = async (currentPage) => {
-        try {
-          const { data } = await fetchPagination(currentPage, limit);
-          setUsers(data);
-        } catch (error) {
-          console.log(error);
-        }
+import querystring from "query-string";
+import axios from "axios";
+import { getUsers, NoGetPageService } from "../../api/userAPI";
+import SelectOption from "../../components/SelectOption";
+import InputSearch from "../../components/InputSearch";
+const UserList = () => {
+  const [users, setUsers] = useState([]);
+  const [pageCount, setPageCount] = useState("");
+  const [curPage, setCurPage] = useState(1);
+  const [filters, setFilters] = useState({
+    page_size: 10,
+    page: 1,
+    sort: "",
+    keyword: "",
+  });
+
+  const [filtersNoPage, setFiltersNoPage] = useState({
+    sort: "",
+    keyword: "",
+  });
+
+  const pageSize = [
+    {
+      label: "Hiển thị 10 mục",
+      value: 10,
+    },
+    {
+      label: "Hiển thị 2 mục",
+      value: 2,
+    },
+    {
+      label: "Hiển thị 5 mục",
+      value: 5,
+    },
+
+    {
+      label: "Hiển thị 15 mục",
+      value: 15,
+    },
+    {
+      label: "Hiển thị 20 mục",
+      value: 20,
+    },
+  ];
+
+  const options = [
+    {
+      label: "Sắp xếp",
+      value: "",
+    },
+    {
+      label: "Từ A->Z",
+      value: 1,
+    },
+    {
+      label: "Từ Z->A",
+      value: 2,
+    },
+  ];
+
+  const paramString = querystring.stringify(filters);
+  const paramNoPageSize = querystring.stringify(filtersNoPage);
+
+  useEffect(() => {
+    try {
+      const getServices = async () => {
+        const { data } = await NoGetPageService(paramNoPageSize);
+        const countData = data.data.length;
+        setPageCount(Math.ceil(countData / filters.page_size));
       };
-    
-      const handlePageClick = async (data) => {
-        console.log(data.selected);
-        const currentPage = data.selected + 1;
-        fetchUsers(currentPage);
+      getServices();
+    } catch (error) {
+      console.log(error.message);
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    try {
+      const getAllService = async () => {
+        const { data } = await getUsers(paramString);
+        setUsers(data.data);
       };
-      const deleteUser = async (id) => {
-        try {
-          const { data } = await remove(id);
-          const newUser = users.filter((item) => item.id !== data.id);
-          setUsers(newUser);
-        } catch (error) {
-          console.log(error);
-        }
-      };
-    return(
-        <Content title="Căn Hộ">
-        <div className="row">
-          <div className="col-12">
-            <div className="card">
-              <div className="card-header">
-                <h3>Danh sách căn hộ</h3>
-              </div>
-              <div className="card-body">
-                <div className="row ">
-                  <div className="col-sm-12">
-                    <div className="input-group rounded my-2 ms-2 d-flex flex-row-reverse">
-                      <div className="form-outline">
-                        <input
-                          id="search-input-sidenav"
-                          type="search"
-                          placeholder="Mã căn hộ"
-                          className="form-control justify-content-rig justify-content-right"
-                        />
-                      </div>
+      getAllService();
+    } catch (error) {
+      console.log(error.message);
+    }
+  }, [paramString]);
+
+  const handleArrange = (value) => {
+    setFilters({
+      ...filters,
+      sort: value,
+    });
+  };
+
+  const handleChangePageSize = (value) => {
+    setFilters({
+      ...filters,
+      page_size: value,
+      page: 1,
+    });
+    console.log(paramString);
+  };
+
+  const handlePageClick = (data) => {
+    console.log("data: ", data);
+    let currentPage = data.selected + 1;
+    setCurPage(currentPage);
+    setFilters({
+      ...filters,
+      page: currentPage,
+    });
+  };
+  console.log(filters);
+
+  const handleGetValue = (value) => {
+    setFilters({
+      ...filters,
+      keyword: value,
+    });
+  };
+  return (
+    <Content title="Danh sách căn Hộ">
+      <div className="row">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-body">
+              <div className="row">
+                <div className="col-sm-12">
+                  <div className="d-flex flex-row-reverse rounded my-2 ms-2">
+                    {/* desc asc */}
+                    <div className="form-outline ">
+                      {/* <DepartmentSearch onSubmit={handleSearchChange} /> */}
+                      <InputSearch handleGetValue={handleGetValue} />
                     </div>
+                    <SelectOption
+                      array={options}
+                      handleGetValue={handleArrange}
+                    />
+                    {/* desc asc */}
+                    {/* pagesize */}
+                    <SelectOption
+                      array={pageSize}
+                      handleGetValue={handleChangePageSize}
+                    />
+                    {/* end pagesize */}
                   </div>
                 </div>
-                <div className="row">
-                  <div className="col-sm-12">
-                    <table className="table table-striped">
-                      <thead>
-                        <tr>
-                          <th scope="col">STT</th>
-                          
-                          <th scope="col">Tên</th>
-                          <th scope="col">Ảnh</th>
-                          <th scope="col">Email</th>
-                          <th scope="col">Sdt</th>
-                          
-                          <th scope="col">Ngày sinh</th>
-                          <th>
-                            <Link
-                              className="btn btn-sm btn-success btn-flat"
-                              to="/admin/user/add"
-                            >
-                              Thêm mới
-                            </Link>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {users.map((user, index) => (
-                          <tr key={user}>
-                            <th scope="row">{index + 1}</th>
-                           
+              </div>
+              <div className="row">
+                <div className="col-sm-12">
+                  <table className="table table-striped">
+                    <thead>
+                      <tr>
+                        <th scope="col">STT</th>
+                        <th scope="col">Họ và tên</th>
+                        <th scope="col">Avatar</th>
+                        <th scope="col">Số điện thoại</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Năm sinh</th>
+                        <th scope="col">Trạng thái</th>
+                        <th>
+                          <a
+                            className="btn btn-block btn-outline-success btn-sm"
+                            href="/admin/user/add"
+                          >
+                            Thêm mới
+                          </a>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users
+                        ? users.map((item, index) => (
+                          <tr key={item.id}>
+                            <th scope="row">{(curPage - 1) * filters.page_size + (index + 1)}</th>
+                            <td>{item.name}</td>
                             <td>
-                              {user.name}
+                              <img width={60} src={item.avatar} />
                             </td>
-                            <td><img src={"user.avatar"}  alt="" /></td>
-                            <td>{user.email? user.email
-                              : "Trống"}</td>
-                            <td>{user.phone}</td>
-                            
-                            <td>{user.birth}</td>
+                            <td>{item.phone_number}</td>
+                            <td>{item.email}</td>
+                            <td>{item.dob}</td>
                             <td>
-                              <button
-                                onClick={() => deleteUser(user.id)}
-                                className="btn btn-sm btn-danger btn-flat"
-                              >
-                                Xóa
-                              </button>
+                              {item.status == 1
+                                ? "Hoạt động"
+                                : "Không hoạt động"}
+                            </td>
+                            <td>
+                              {/* <a
+                              className="btn btn-sm btn-outline-primary btn-flat"
+                              href="/admin/department/detail/13"
+                            >
+                              Chi tiết
+                            </a> */}
                               <Link
-                                className="btn btn-sm btn-success btn-flat"
-                                to={`/admin/user/edit/${user.id}`}
-                                onId={user.id}
+                                type="button"
+                                to={`/admin/user/edit/${item.id}`}
+                                className="btn btn-block btn-outline-success btn-sm"
                               >
                                 Sửa
                               </Link>
                             </td>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        ))
+                        : "Không có dữ liệu"}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="row">
-                  <div className="col-sm-12">
-                    <ReactPaginate
-                      previousLabel={"previous"}
-                      nextLabel={"next"}
-                      breakLabel={"..."}
-                      pageCount={pageCount}
-                      marginPagesDisplayed={3}
-                      pageRangeDisplayed={3}
-                      onPageChange={handlePageClick}
-                      containerClassName={"pagination justify-content-center"}
-                      pageClassName={"page-item"}
-                      pageLinkClassName={"page-link"}
-                      previousClassName={"page-item"}
-                      previousLinkClassName={"page-link"}
-                      nextClassName={"page-item"}
-                      nextLinkClassName={"page-link"}
-                      activeClassName={"active"}
-                    />
-                  </div>
+              </div>
+              <div className="row">
+                <div className="col-sm-12">
+                  <ReactPaginate
+                    forcePage={0}
+                    previousLabel={"previous"}
+                    nextLabel={"next"}
+                    breakLabel={"..."}
+                    pageCount={pageCount}
+                    marginPagesDisplayed={3}
+                    pageRangeDisplayed={3}
+                    onPageChange={handlePageClick}
+                    containerClassName={"pagination justify-content-center"}
+                    pageClassName={"page-item"}
+                    pageLinkClassName={"page-link"}
+                    previousClassName={"page-item"}
+                    previousLinkClassName={"page-link"}
+                    nextClassName={"page-item"}
+                    nextLinkClassName={"page-link"}
+                    // activeClassName={"active"}
+                    disableInitialCallback={false}
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </Content>
-    )
+      </div>
+    </Content>
+  )
 };
 export default UserList;

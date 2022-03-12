@@ -44,12 +44,12 @@ const BillModal = () => {
                     <th scope="row">{index + 1}</th>
                     <td>{item.ten_dich_vu}</td>
                     <td>{item.quantity}</td>
-                    <td>{item.price}</td>
+                    <td>{item.don_gia}</td>
                     <td>{item.total_price}</td>
                     <td className="d-flex justify-content-center">
                       <Link
                         variant="btn btn-sm btn-outline-primary btn-flat"
-                        to={`/admin/department/modaledit/${item.bill_detail_id}`}
+                        to={`/admin/department/modaledit/${item.bill_id}`}
                       >
                         Sửa
                       </Link>

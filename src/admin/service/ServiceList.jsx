@@ -4,14 +4,23 @@ import axios from "axios";
 import querystring from "query-string";
 import ReactPaginate from "react-paginate";
 import SelectOption from "../../components/SelectOption";
-import { get } from "../../common/service";
+import { get, NoGetPageService } from "../../api/service";
+import InputSearch from "../../components/InputSearch";
+import { Link } from "react-router-dom";
 const ServiceList = () => {
   const [services, setServices] = useState([]);
   const [pageCount, setPageCount] = useState("");
+  const [curPage, setCurPage] = useState(1);
   const [filters, setFilters] = useState({
     page_size: 10,
     page: 1,
     sort: "",
+    keyword: "",
+  });
+
+  const [filtersNoPage, setFiltersNoPage] = useState({
+    sort: "",
+    keyword: "",
   });
 
   const pageSize = [
@@ -51,14 +60,23 @@ const ServiceList = () => {
       label: "Tăng dần",
       value: 2,
     },
+    {
+      label: "Từ A->Z",
+      value: 3,
+    },
+    {
+      label: "Từ Z->A",
+      value: 4,
+    },
   ];
 
   const paramString = querystring.stringify(filters);
+  const paramNoPageSize = querystring.stringify(filtersNoPage);
 
   useEffect(() => {
     try {
       const getServices = async () => {
-        const { data } = await get();
+        const { data } = await NoGetPageService(paramNoPageSize);
         const countData = data.data.length;
         setPageCount(Math.ceil(countData / filters.page_size));
       };
@@ -66,14 +84,13 @@ const ServiceList = () => {
     } catch (error) {
       console.log(error.message);
     }
-  }, [filters.page_size]);
+  }, [filters]);
 
   useEffect(() => {
     try {
       const getAllService = async () => {
         const { data } = await get(paramString);
         setServices(data.data);
-        console.log(data.data);
       };
       getAllService();
     } catch (error) {
@@ -100,12 +117,22 @@ const ServiceList = () => {
   const handlePageClick = (data) => {
     console.log("data: ", data);
     let currentPage = data.selected + 1;
+    setCurPage(currentPage);
     setFilters({
       ...filters,
       page: currentPage,
     });
   };
-  console.log(filters);
+  console.log(curPage);
+
+  const handleGetValue = (value) => {
+    setFilters({
+      ...filters,
+      keyword: value,
+    });
+  };
+
+  console.log(services);
   return (
     <>
       <Content title="Danh sách dịch vụ" subName="Dịch vụ">
@@ -116,14 +143,11 @@ const ServiceList = () => {
                 <div className="row">
                   <div className="col-sm-12">
                     <div className="d-flex flex-row-reverse rounded my-2 ms-2">
-                      {/* <div className="form-outline ">
-                        <input
-                          placeholder="Tìm kiếm"
-                          className="form-control justify-content-rig justify-content-right"
-                          type="text"
-                        />
-                      </div> */}
                       {/* desc asc */}
+                      <div className="form-outline ">
+                        {/* <DepartmentSearch onSubmit={handleSearchChange} /> */}
+                        <InputSearch handleGetValue={handleGetValue} />
+                      </div>
                       <SelectOption
                         array={options}
                         handleGetValue={handleArrange}
@@ -147,6 +171,7 @@ const ServiceList = () => {
                           <th scope="col">Tên dịch vụ</th>
                           <th scope="col">Giá</th>
                           <th scope="col">Mô tả</th>
+                          <th scope="col">Trạng thái</th>
                           <th>
                             <a
                               className="btn btn-sm btn-outline-success btn-flat"
@@ -161,26 +186,25 @@ const ServiceList = () => {
                         {services
                           ? services.map((item, index) => (
                               <tr key={index}>
-                                <th scope="row">{index + 1}</th>
+                                <th scope="row">
+                                  {(curPage - 1) * filters.page_size +
+                                    (index + 1)}
+                                </th>
                                 <td>{item.name}</td>
                                 <td>{item.price}đ</td>
                                 <td>{item.description}</td>
                                 <td>
-                                  {/* <a
-                              className="btn btn-sm btn-outline-primary btn-flat"
-                              href="/admin/department/detail/13"
-                            >
-                              Chi tiết
-                            </a> */}
-                                  <a
+                                  {item.status == 1
+                                    ? "Hoạt động"
+                                    : "Không hoạt động"}
+                                </td>
+                                <td>
+                                  <Link
+                                    to={`/admin/service/edit/${item.id}`}
                                     className="btn btn-sm btn-outline-success btn-flat"
-                                    href="/admin/department/edit/13"
                                   >
                                     Sửa
-                                  </a>
-                                  <button className="btn btn-sm btn-outline-danger btn-flat">
-                                    Xóa
-                                  </button>
+                                  </Link>
                                 </td>
                               </tr>
                             ))
@@ -192,6 +216,7 @@ const ServiceList = () => {
                 <div className="row">
                   <div className="col-sm-12">
                     <ReactPaginate
+                      forcePage={0}
                       previousLabel={"previous"}
                       nextLabel={"next"}
                       breakLabel={"..."}
@@ -206,7 +231,8 @@ const ServiceList = () => {
                       previousLinkClassName={"page-link"}
                       nextClassName={"page-item"}
                       nextLinkClassName={"page-link"}
-                      activeClassName={"active"}
+                      // activeClassName={"active"}
+                      disableInitialCallback={false}
                     />
                   </div>
                 </div>

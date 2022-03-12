@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useParams } from "react-router-dom";
+import Swal from "sweetalert2";
 import { add } from "../../../common/userApi";
 import Content from "../../../core/Content";
 const UserAddForm = () => {
@@ -10,33 +12,70 @@ const UserAddForm = () => {
     formState: { errors }
   } = useForm();
 
-  const { id } = useParams();
-  console.log(id);
-  
-  const addUsers = async (item) => {
+
+  const [avatar, setAvatar] = useState("");
+
+  const [apartmentNotOwned, setApartmentNotOwned] = useState([]);
+
+  const addUsers = (item) => {
     console.log(item);
-    try {
-      alert('Thêm mới thành công');
-      return await add(item);
-    } catch (error) {
-      console.log(error);
-    }
+    axios.post("http://apartment-system.xyz/api/user/add", item).then(() => {
+      var Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+      });
+      Toast.fire({
+        icon: "success",
+        title: "Thêm mới người dùng thành công.",
+      });
+    }).catch((error) => {
+      var Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+      });
+      Toast.fire({
+        icon: "error",
+        title: error.message,
+      });
+    });
   }
   const onSubmit = (item) => {
     addUsers(item)
+    console.log(item);
   }
+
+  const handleFile = (e) => {
+    console.log(e.target.files[0]);
+    const data = new FormData();
+    data.append('avatar', e.target.files[0])
+    console.log(data);
+  }
+  console.log(avatar);
+
+  useEffect(() => {
+    try {
+      const getData = () => {
+        axios.get("http://apartment-system.xyz/api/apartment/not-owned").then((response) => setApartmentNotOwned(response.data.data))
+      }
+      getData();
+    } catch (error) {
+      console.log(error.message);
+    }
+  }, [])
+
   const addUser = () => {
     return (
       <div className="col-md-12">
         <div className="card card-primary">
-          
-          {/* /.card-header */}
-          {/* form start */}
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="card-body">
               <div className="row">
                 <div className="col-md-6">
-                <div className="form-group">
+                  <div className="form-group">
                     <label htmlFor="exampleInputEmail1">Tên</label>
                     <input
                       type="text"
@@ -45,20 +84,20 @@ const UserAddForm = () => {
                       placeholder="Nhập tên"
                       {...register('name', {
                         required: true,
-                        
+
                       })}
                     />
                     {errors?.name?.type === "required" && <p className="text-danger">Nhập tên</p>}
-                    
+
                   </div>
                   <div className="form-group">
-                    <label htmlFor="exampleInputEmail1">Sdt</label>
+                    <label htmlFor="exampleInputEmail1">Số điện thoại</label>
                     <input
-                      type="number"
+                      type="text"
                       className="form-control"
                       id="exampleInputEmail1"
-                      placeholder="Nhập số điện thaoij"
-                      {...register('phone', {
+                      placeholder="Nhập số điện thoại"
+                      {...register('phone_number', {
                         required: true,
                         pattern: /^(0?)(3[2-9]|5[6|8|9]|7[0|6-9]|8[0-6|8|9]|9[0-4|6-9])[0-9]{7}$/
                       })}
@@ -81,46 +120,45 @@ const UserAddForm = () => {
                     {errors?.email?.type === "required" && <p className="text-danger">Hãy nhập trường này</p>}
                     {errors?.email?.type === "pattern" && <p className="text-danger">Hãy nhập các ký từ A-z</p>}
                   </div>
-                  
+
                 </div>
                 <div className="col-md-6">
-                <div className="form-group">
+                  <div class="form-group">
+                    <label>Chọn căn hộ</label>
+                    <select {...register('apartment_id')} class="form-control">
+                      <option selected>Chọn căn hộ</option>
+                      {apartmentNotOwned.map((item) => (
+                        <option value={item.id}>{item.apartment_id}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
                     <label htmlFor="exampleInputEmail1">Ngày sinh</label>
                     <input
                       type="date"
                       className="form-control"
                       id="exampleInputEmail1"
                       placeholder="Nhập ngày sinh"
-                      {...register('birth', {
+                      {...register('dob', {
                         required: true,
                       })}
                     />
                     {errors?.phone?.type === "required" && <p className="text-danger">sNhập ngày sinh</p>}
-                    
                   </div>
-                  <div className="form-group">
-                    <label htmlFor="exampleInputEmail1">Password</label>
-                    <input
-                      type="password"
-                      className="form-control"
-                      id="exampleInputEmail1"
-                      placeholder="Nhập mk"
-                      {...register('password', {
-                        required: true,
-                        pattern: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/
-                      })}
-                    />
-                    {errors?.password?.type === "required" && <p className="text-danger">Hãy nhập trường này</p>}
-                    {errors?.password?.type === "pattern" && <p className="text-danger">Hãy nhập các ký từ A-z</p>}
+                  <div class="form-group">
+                    <label>Trạng thái</label>
+                    <select {...register('status')} class="form-control">
+                      <option selected value="0">Chọn trạng thái</option>
+                      <option value="1">Hoạt động</option>
+                      <option value="0">Không hoạt động</option>
+                    </select>
                   </div>
-                  
-                  
                 </div>
               </div>
             </div>
             {/* /.card-body */}
             <div class="card-footer">
-              <Link to="/admin/user" type="submit" class="btn btn-default float-left">
+              <Link to="/admin/user" type="button" class="btn btn-default float-left">
                 Quay lại
               </Link>
               <button type="submit" class="btn btn-info float-right">
@@ -133,7 +171,7 @@ const UserAddForm = () => {
     )
   }
   return (
-    <Content title="Thêm mới căn hộ">
+    <Content title="Thêm mới người dùng">
       {addUser()}
     </Content>
   );
